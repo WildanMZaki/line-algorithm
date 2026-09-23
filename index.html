@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Simulasi interaktif step-by-step algoritma Line DDA dan Bresenham untuk pembelajaran Komputasi Grafik.">
+  <title>Line Algorithm Simulator — DDA &amp; Bresenham</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="app">
+
+    <!-- ===== HEADER ===== -->
+    <header class="header">
+      <div class="header-title">
+        <h1>🔬 Line Algorithm Simulator</h1>
+        <span class="badge">Phase 1</span>
+      </div>
+
+      <!-- Controls Row -->
+      <div class="header-controls">
+        <!-- Algorithm Selection -->
+        <div class="control-group">
+          <label for="algo-select">Algoritma:</label>
+          <select id="algo-select">
+            <option value="dda">Line DDA</option>
+            <option value="bresenham">Bresenham</option>
+          </select>
+        </div>
+
+        <div class="control-separator"></div>
+
+        <!-- Coordinate Inputs -->
+        <div class="control-group">
+          <label>P1:</label>
+          <input type="number" id="input-x1" class="coord-input" value="0" title="x1">
+          <input type="number" id="input-y1" class="coord-input" value="0" title="y1">
+        </div>
+        <div class="control-group">
+          <label>P2:</label>
+          <input type="number" id="input-x2" class="coord-input" value="20" title="x2">
+          <input type="number" id="input-y2" class="coord-input" value="8" title="y2">
+        </div>
+
+        <div class="control-separator"></div>
+
+        <!-- Grid Size -->
+        <div class="control-group">
+          <label for="grid-size-select">Grid:</label>
+          <select id="grid-size-select">
+            <option value="8">±8</option>
+            <option value="16">±16</option>
+            <option value="32" selected>±32</option>
+            <option value="64">±64</option>
+          </select>
+        </div>
+
+        <div class="control-separator"></div>
+
+        <!-- Presets -->
+        <div class="control-group" id="preset-container">
+          <label>Preset:</label>
+        </div>
+      </div>
+
+      <!-- Playback Row -->
+      <div class="header-playback">
+        <button id="btn-play" class="play-btn primary">▶ Play</button>
+        <button id="btn-step" class="play-btn secondary">⏭ Step</button>
+        <button id="btn-reset" class="play-btn secondary">↺ Reset</button>
+
+        <div class="control-separator"></div>
+
+        <div class="control-group">
+          <label>Speed:</label>
+          <input type="range" id="speed-slider" min="1" max="100" value="40">
+          <span class="speed-label" id="speed-label">600ms</span>
+        </div>
+
+        <span class="step-counter" id="step-counter">Step: 0</span>
+      </div>
+
+      <!-- Info Bar -->
+      <div class="header-info" id="info-bar">
+        <span class="info-hint">Masukkan koordinat lalu tekan Play/Step atau pilih preset.</span>
+      </div>
+    </header>
+
+    <!-- ===== MAIN CONTENT ===== -->
+    <main class="main">
+
+      <!-- Column 1: Grid Canvas -->
+      <div class="grid-panel">
+        <canvas id="grid-canvas"></canvas>
+        <div class="hover-coord" id="hover-coord">—</div>
+      </div>
+
+      <!-- Column 2: Code View & Step Info -->
+      <div class="code-panel">
+        <div class="panel-header">
+          <span class="icon">📝</span> Algorithm Code (C#)
+        </div>
+        <div class="code-container" id="code-container">
+          <!-- Populated by codeview.js -->
+        </div>
+        <div class="step-description" id="step-description">
+          Tekan "Step" atau "Play" untuk mulai simulasi.
+        </div>
+      </div>
+
+      <!-- Column 3: Tracing Table -->
+      <div class="trace-panel">
+        <div class="panel-header">
+          <span class="icon">📊</span> Tracing Table
+        </div>
+        <div class="trace-scroll" id="trace-scroll">
+          <table>
+            <thead id="trace-head"></thead>
+            <tbody id="trace-body"></tbody>
+          </table>
+        </div>
+      </div>
+
+    </main>
+
+  </div>
+
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>
