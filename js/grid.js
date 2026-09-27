@@ -80,6 +80,18 @@ export class Grid {
     this.render();
   }
 
+  /** Place multiple pixels at once (batch, single render call) */
+  putPixels(pixelArray) {
+    for (const p of pixelArray) {
+      const key = `${p.x},${p.y}`;
+      this.pixels.set(key, p.color || 'active');
+    }
+    if (pixelArray.length > 0) {
+      this.latestPixel = pixelArray[pixelArray.length - 1];
+    }
+    this.render();
+  }
+
   /** Clear all placed pixels */
   clearPixels() {
     this.pixels.clear();

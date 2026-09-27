@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Simulasi interaktif step-by-step algoritma Line DDA dan Bresenham untuk pembelajaran Komputasi Grafik.">
-  <title>Line Algorithm Simulator — DDA &amp; Bresenham</title>
+  <meta name="description" content="Simulasi interaktif step-by-step algoritma Line DDA dan Bresenham untuk pembelajaran Komputasi Grafik, termasuk drawing bangun datar.">
+  <title>Line Algorithm Simulator — DDA &amp; Bresenham | Shapes</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -14,56 +14,64 @@
     <header class="header">
       <div class="header-title">
         <h1>🔬 Line Algorithm Simulator</h1>
-        <span class="badge">Phase 1</span>
+        <span class="badge">Phase 2</span>
       </div>
 
-      <!-- Controls Row -->
-      <div class="header-controls">
-        <!-- Algorithm Selection -->
-        <div class="control-group">
-          <label for="algo-select">Algoritma:</label>
-          <select id="algo-select">
-            <option value="dda">Line DDA</option>
-            <option value="bresenham">Bresenham</option>
-          </select>
-        </div>
+      <!-- Tab Bar -->
+      <div class="tab-bar">
+        <button class="tab-btn active" data-tab="line">📐 Line Algorithm</button>
+        <button class="tab-btn" data-tab="shapes">🔷 Shapes</button>
+      </div>
 
-        <div class="control-separator"></div>
+      <!-- Line Algorithm Controls -->
+      <div id="line-controls" class="tab-content">
+        <div class="header-controls">
+          <!-- Algorithm Selection -->
+          <div class="control-group">
+            <label for="algo-select">Algoritma:</label>
+            <select id="algo-select">
+              <option value="dda">Line DDA</option>
+              <option value="bresenham">Bresenham</option>
+            </select>
+          </div>
 
-        <!-- Coordinate Inputs -->
-        <div class="control-group">
-          <label>P1:</label>
-          <input type="number" id="input-x1" class="coord-input" value="0" title="x1">
-          <input type="number" id="input-y1" class="coord-input" value="0" title="y1">
-        </div>
-        <div class="control-group">
-          <label>P2:</label>
-          <input type="number" id="input-x2" class="coord-input" value="20" title="x2">
-          <input type="number" id="input-y2" class="coord-input" value="8" title="y2">
-        </div>
+          <div class="control-separator"></div>
 
-        <div class="control-separator"></div>
+          <!-- Coordinate Inputs -->
+          <div class="control-group">
+            <label>P1:</label>
+            <input type="number" id="input-x1" class="coord-input" value="0" title="x1">
+            <input type="number" id="input-y1" class="coord-input" value="0" title="y1">
+          </div>
+          <div class="control-group">
+            <label>P2:</label>
+            <input type="number" id="input-x2" class="coord-input" value="20" title="x2">
+            <input type="number" id="input-y2" class="coord-input" value="8" title="y2">
+          </div>
 
-        <!-- Grid Size -->
-        <div class="control-group">
-          <label for="grid-size-select">Grid:</label>
-          <select id="grid-size-select">
-            <option value="8">±8</option>
-            <option value="16">±16</option>
-            <option value="32" selected>±32</option>
-            <option value="64">±64</option>
-          </select>
-        </div>
+          <div class="control-separator"></div>
 
-        <div class="control-separator"></div>
-
-        <!-- Presets -->
-        <div class="control-group" id="preset-container">
-          <label>Preset:</label>
+          <!-- Presets -->
+          <div class="control-group" id="preset-container">
+            <label>Preset:</label>
+          </div>
         </div>
       </div>
 
-      <!-- Playback Row -->
+      <!-- Shapes Controls -->
+      <div id="shapes-controls" class="tab-content hidden">
+        <div class="header-controls">
+          <div class="control-group">
+            <label for="shape-algo-select">DrawLine via:</label>
+            <select id="shape-algo-select">
+              <option value="dda">DDA</option>
+              <option value="bresenham">Bresenham</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- Playback Row (shared) -->
       <div class="header-playback">
         <button id="btn-play" class="play-btn primary">▶ Play</button>
         <button id="btn-step" class="play-btn secondary">⏭ Step</button>
@@ -75,6 +83,19 @@
           <label>Speed:</label>
           <input type="range" id="speed-slider" min="1" max="100" value="40">
           <span class="speed-label" id="speed-label">600ms</span>
+        </div>
+
+        <div class="control-separator"></div>
+
+        <!-- Grid Size (shared between tabs) -->
+        <div class="control-group">
+          <label for="grid-size-select">Grid:</label>
+          <select id="grid-size-select">
+            <option value="8">±8</option>
+            <option value="16">±16</option>
+            <option value="32" selected>±32</option>
+            <option value="64">±64</option>
+          </select>
         </div>
 
         <span class="step-counter" id="step-counter">Step: 0</span>
@@ -98,8 +119,10 @@
       <!-- Column 2: Code View & Step Info -->
       <div class="code-panel">
         <div class="panel-header">
-          <span class="icon">📝</span> Algorithm Code (C#)
+          <span class="icon">📝</span> <span id="code-panel-title">Algorithm Code (C#)</span>
         </div>
+        <!-- Shape Parameters (visible only in shapes mode) -->
+        <div id="shape-params-bar" class="shape-params-bar hidden"></div>
         <div class="code-container" id="code-container">
           <!-- Populated by codeview.js -->
         </div>
@@ -108,11 +131,13 @@
         </div>
       </div>
 
-      <!-- Column 3: Tracing Table -->
+      <!-- Column 3: Tracing Table & Shape Selector -->
       <div class="trace-panel">
         <div class="panel-header">
-          <span class="icon">📊</span> Tracing Table
+          <span class="icon">📊</span> <span id="trace-panel-title">Tracing Table</span>
         </div>
+        <!-- Shape Selector (visible only in shapes mode) -->
+        <div id="shape-selector-bar" class="shape-selector-bar hidden"></div>
         <div class="trace-scroll" id="trace-scroll">
           <table>
             <thead id="trace-head"></thead>

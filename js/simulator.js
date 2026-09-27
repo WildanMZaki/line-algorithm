@@ -62,7 +62,9 @@ export class Simulator {
 
     // Reset visual components
     this.grid.clearPixels();
-    this.grid.setEndpoints(x1, y1, x2, y2);
+    if (x1 != null && y1 != null) {
+      this.grid.setEndpoints(x1, y1, x2, y2);
+    }
     this.codeView.setCode(codeLines);
     this.tracer.setColumns(columns);
 
@@ -99,9 +101,12 @@ export class Simulator {
       this.codeView.highlightLines(data.highlightLines, data.annotations || {});
     }
 
-    // 2. Place pixel on grid
+    // 2. Place pixel(s) on grid
     if (data.pixel) {
       this.grid.putPixel(data.pixel.x, data.pixel.y);
+    }
+    if (data.pixels) {
+      this.grid.putPixels(data.pixels);
     }
 
     // 3. Add tracing table row

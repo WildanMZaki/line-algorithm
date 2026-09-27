@@ -121,16 +121,16 @@ export class CodeView {
     }
 
     // Type-like / Built-in functions
-    const types = ['Math'];
+    const types = ['Math', 'Vector2'];
     for (const t of types) {
       html = html.replace(new RegExp(`\\b(${t})\\b`, 'g'), '<span class="syn-type">$1</span>');
     }
 
     // Method calls
-    html = html.replace(/\.(Max|Min|Abs|Round|Floor|Ceil)\b/g, '.<span class="syn-method">$1</span>');
+    html = html.replace(/\.(Max|Min|Abs|Round|Floor|Ceil|Sqrt)\b/g, '.<span class="syn-method">$1</span>');
 
-    // PutPixel special
-    html = html.replace(/\b(PutPixel)\b/g, '<span class="syn-putpixel">$1</span>');
+    // PutPixel / Draw* functions
+    html = html.replace(/\b(PutPixel|Draw\w+)\b/g, '<span class="syn-putpixel">$1</span>');
 
     // Numbers (but not inside already-wrapped spans)
     html = html.replace(/(?<![">])\b(\d+)\b(?![<"])/g, '<span class="syn-number">$1</span>');
