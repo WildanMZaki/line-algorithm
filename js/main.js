@@ -16,6 +16,9 @@ import {
   SHAPES, SHAPE_LIST, SHAPE_TRACE_COLUMNS,
   shapeGenerator, computePixelsDDA, computePixelsBresenham,
 } from './shapes.js';
+import {
+  CURVES, CURVE_LIST, OCTANT_COLORS, QUADRANT_COLORS,
+} from './curves.js';
 
 // ---------- SINGLETON INSTANCES ----------
 const grid = new Grid();
@@ -24,8 +27,9 @@ const tracer = new Tracer();
 const simulator = new Simulator();
 
 // ---------- STATE ----------
-let currentTab = 'line';    // 'line' | 'shapes'
+let currentTab = 'line';    // 'line' | 'shapes' | 'curves'
 let currentShape = 'persegi';
+let currentCurve = 'circle';
 
 // ---------- DOM REFERENCES ----------
 let els = {};
@@ -38,6 +42,7 @@ document.addEventListener('DOMContentLoaded', () => {
     tabBtns:          document.querySelectorAll('.tab-btn'),
     lineControls:     document.getElementById('line-controls'),
     shapesControls:   document.getElementById('shapes-controls'),
+    curvesControls:   document.getElementById('curves-controls'),
 
     // Line Controls
     algoSelect:       document.getElementById('algo-select'),
@@ -51,6 +56,11 @@ document.addEventListener('DOMContentLoaded', () => {
     shapeAlgoSelect:  document.getElementById('shape-algo-select'),
     shapeParamsBar:   document.getElementById('shape-params-bar'),
     shapeSelectorBar: document.getElementById('shape-selector-bar'),
+
+    // Curves Controls
+    curveParamsBar:   document.getElementById('curve-params-bar'),
+    curveSelectorBar: document.getElementById('curve-selector-bar'),
+    symmetryLegend:   document.getElementById('symmetry-legend-container'),
 
     // Shared Controls
     gridSizeSelect:   document.getElementById('grid-size-select'),
@@ -94,6 +104,7 @@ document.addEventListener('DOMContentLoaded', () => {
   setupPresets();
   setupControls();
   setupShapeSelector();
+  setupCurveSelector();
   setupPlayback();
   setupGridHover();
   setupResizeHandler();
@@ -121,15 +132,23 @@ function setupTabs() {
       // Show/hide header controls
       els.lineControls.classList.toggle('hidden', tab !== 'line');
       els.shapesControls.classList.toggle('hidden', tab !== 'shapes');
+      els.curvesControls.classList.toggle('hidden', tab !== 'curves');
 
       // Show/hide shape-specific panel elements
       els.shapeParamsBar.classList.toggle('hidden', tab !== 'shapes');
       els.shapeSelectorBar.classList.toggle('hidden', tab !== 'shapes');
 
+      // Show/hide curve-specific panel elements
+      els.curveParamsBar.classList.toggle('hidden', tab !== 'curves');
+      els.curveSelectorBar.classList.toggle('hidden', tab !== 'curves');
+
       // Update panel header labels
       if (tab === 'shapes') {
         els.codePanelTitle.textContent = 'Shape Code (C#)';
         els.tracePanelTitle.textContent = 'Shape Trace';
+      } else if (tab === 'curves') {
+        els.codePanelTitle.textContent = 'Curve Code (C#)';
+        els.tracePanelTitle.textContent = 'Curve Trace';
       } else {
         els.codePanelTitle.textContent = 'Algorithm Code (C#)';
         els.tracePanelTitle.textContent = 'Tracing Table';
@@ -263,6 +282,104 @@ function buildShapeParams(shapeKey) {
 }
 
 // ============================================================
+//  CURVE SELECTOR & PARAMS
+// ============================================================
+
+function setupCurveSelector() {
+  CURVE_LIST.forEach((curve, idx) => {
+    const btn = document.createElement('button');
+    btn.className = 'curve-btn' + (idx === 0 ? ' active' : '');
+    btn.dataset.curve = curve.key;
+    btn.textContent = `${curve.icon} ${curve.name}`;
+    btn.addEventListener('click', () => {
+      // Update active state
+      els.curveSelectorBar.querySelectorAll('.curve-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+
+      currentCurve = curve.key;
+      buildCurveParams(curve.key);
+      buildSymmetryLegend(curve.key);
+      loadCurveSimulation();
+    });
+    els.curveSelectorBar.appendChild(btn);
+  });
+
+  // Initialize first curve params and legend
+  buildCurveParams('circle');
+  buildSymmetryLegend('circle');
+}
+
+/** Build parameter input fields for the selected curve */
+function buildCurveParams(curveKey) {
+  const curve = CURVES[curveKey];
+  els.curveParamsBar.innerHTML = '';
+
+  curve.params.forEach(param => {
+    const group = document.createElement('div');
+    group.className = 'param-group';
+
+    const label = document.createElement('label');
+    label.textContent = param.label + ':';
+
+    const input = document.createElement('input');
+    input.type = 'number';
+    input.className = 'coord-input curve-param';
+    input.dataset.key = param.key;
+    input.value = param.default;
+    if (param.min !== undefined) input.min = param.min;
+
+    input.addEventListener('input', () => {
+      if (currentTab === 'curves') loadCurveSimulation();
+    });
+    input.addEventListener('change', () => {
+      if (currentTab === 'curves') loadCurveSimulation();
+    });
+
+    group.appendChild(label);
+    group.appendChild(input);
+    els.curveParamsBar.appendChild(group);
+  });
+}
+
+/** Build the symmetry legend chips (8 octants or 4 quadrants) */
+function buildSymmetryLegend(curveKey) {
+  if (!els.symmetryLegend) return;
+  els.symmetryLegend.innerHTML = '';
+
+  if (curveKey === 'circle') {
+    const octNames = [
+      'Oktan 1 (0°–45°, Primer)',
+      'Oktan 2 (45°–90°)',
+      'Oktan 3 (90°–135°)',
+      'Oktan 4 (135°–180°)',
+      'Oktan 5 (180°–225°)',
+      'Oktan 6 (225°–270°)',
+      'Oktan 7 (270°–315°)',
+      'Oktan 8 (315°–360°)',
+    ];
+    octNames.forEach((name, i) => {
+      const chip = document.createElement('span');
+      chip.className = 'symmetry-chip';
+      chip.innerHTML = `<span class="chip-dot" style="background:${OCTANT_COLORS[i]};"></span>${name}`;
+      els.symmetryLegend.appendChild(chip);
+    });
+  } else {
+    const qNames = [
+      'Kuadran 1 (+x, +y)',
+      'Kuadran 2 (-x, +y)',
+      'Kuadran 3 (-x, -y)',
+      'Kuadran 4 (+x, -y)',
+    ];
+    qNames.forEach((name, i) => {
+      const chip = document.createElement('span');
+      chip.className = 'symmetry-chip';
+      chip.innerHTML = `<span class="chip-dot" style="background:${QUADRANT_COLORS[i]};"></span>${name}`;
+      els.symmetryLegend.appendChild(chip);
+    });
+  }
+}
+
+// ============================================================
 //  PLAYBACK
 // ============================================================
 
@@ -302,6 +419,8 @@ function setupPlayback() {
 function loadCurrentSimulation() {
   if (currentTab === 'shapes') {
     loadShapeSimulation();
+  } else if (currentTab === 'curves') {
+    loadCurveSimulation();
   } else {
     loadSimulation();
   }
@@ -361,6 +480,28 @@ function loadShapeSimulation() {
   // Load into simulator without endpoints (shapes don't need ideal line / start-end markers)
   simulator.load(gen, shape.code, SHAPE_TRACE_COLUMNS);
   updateShapeInfoBar(shape, params, algo);
+  updatePlaybackUI({ playing: false, finished: false });
+}
+
+/** Load curve simulation with current curve and params */
+function loadCurveSimulation() {
+  const curve = CURVES[currentCurve];
+  if (!curve) return;
+
+  // Gather parameter values from inputs
+  const params = {};
+  const inputs = els.curveParamsBar.querySelectorAll('.curve-param');
+  for (const input of inputs) {
+    const val = input.value.trim();
+    if (val === '' || val === '-') return; // still typing
+    const num = parseInt(val, 10);
+    if (isNaN(num)) return;
+    params[input.dataset.key] = num;
+  }
+
+  const gen = curve.createGenerator(params);
+  simulator.load(gen, curve.code, curve.columns);
+  els.infoBar.innerHTML = curve.getInfoHtml(params);
   updatePlaybackUI({ playing: false, finished: false });
 }
 

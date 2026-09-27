@@ -226,6 +226,7 @@ export class Grid {
       let fillColor;
       if (isStart) fillColor = '#00ff88';
       else if (isEnd && this.pixels.size > 1) fillColor = '#ff3366';
+      else if (color && color !== 'active') fillColor = color;
       else if (isLatest) fillColor = '#00ffee';
       else fillColor = '#00ddb8';
 

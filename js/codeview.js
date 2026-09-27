@@ -115,7 +115,7 @@ export class CodeView {
     html = html.replace(/("(?:[^"\\]|\\.)*")/g, '<span class="syn-string">$1</span>');
 
     // Keywords
-    const keywords = ['public', 'void', 'float', 'int', 'for', 'if', 'else', 'return', 'bool', 'var', 'new'];
+    const keywords = ['public', 'void', 'float', 'int', 'for', 'while', 'if', 'else', 'return', 'bool', 'var', 'new'];
     for (const kw of keywords) {
       html = html.replace(new RegExp(`\\b(${kw})\\b`, 'g'), '<span class="syn-keyword">$1</span>');
     }
@@ -129,8 +129,8 @@ export class CodeView {
     // Method calls
     html = html.replace(/\.(Max|Min|Abs|Round|Floor|Ceil|Sqrt)\b/g, '.<span class="syn-method">$1</span>');
 
-    // PutPixel / Draw* functions
-    html = html.replace(/\b(PutPixel|Draw\w+)\b/g, '<span class="syn-putpixel">$1</span>');
+    // PutPixel / Draw* / Plot* functions
+    html = html.replace(/\b(PutPixel|Draw\w+|Plot\w+)\b/g, '<span class="syn-putpixel">$1</span>');
 
     // Numbers (but not inside already-wrapped spans)
     html = html.replace(/(?<![">])\b(\d+)\b(?![<"])/g, '<span class="syn-number">$1</span>');

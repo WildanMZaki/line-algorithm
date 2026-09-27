@@ -705,3 +705,104 @@ input[type="range"]::-moz-range-thumb {
   white-space: nowrap;
 }
 
+.tab-btn.active[data-tab="curves"] {
+  color: var(--accent-cyan);
+  border-bottom-color: var(--accent-cyan);
+}
+
+/* ---------- CURVE SELECTOR BAR (in trace panel) ---------- */
+.curve-selector-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border-subtle);
+  background: rgba(0, 255, 204, 0.03);
+  flex-shrink: 0;
+}
+
+.curve-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 10px;
+  border-radius: var(--radius-sm);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-medium);
+  color: var(--text-secondary);
+  font-family: 'Inter', sans-serif;
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.curve-btn:hover {
+  background: var(--bg-surface);
+  color: var(--accent-cyan);
+  border-color: rgba(0, 255, 204, 0.4);
+}
+
+.curve-btn.active {
+  background: rgba(0, 255, 204, 0.12);
+  color: var(--accent-cyan);
+  border-color: var(--accent-cyan);
+  box-shadow: 0 0 8px rgba(0, 255, 204, 0.25);
+}
+
+/* ---------- CURVE PARAMS BAR (in code panel) ---------- */
+.curve-params-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 14px;
+  border-bottom: 1px solid var(--border-subtle);
+  background: rgba(0, 255, 204, 0.02);
+  flex-shrink: 0;
+}
+
+.curve-params-bar .param-group {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.curve-params-bar label {
+  font-size: 11px;
+  color: var(--text-secondary);
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+/* ---------- OCTANT / QUADRANT LEGEND ---------- */
+.symmetry-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+  font-size: 11px;
+}
+
+.symmetry-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 7px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border-subtle);
+  font-size: 10px;
+  font-family: 'JetBrains Mono', monospace;
+  color: var(--text-secondary);
+}
+
+.symmetry-chip .chip-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+

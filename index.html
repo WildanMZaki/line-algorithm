@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Simulasi interaktif step-by-step algoritma Line DDA dan Bresenham untuk pembelajaran Komputasi Grafik, termasuk drawing bangun datar.">
-  <title>Line Algorithm Simulator — DDA &amp; Bresenham | Shapes</title>
+  <meta name="description" content="Simulasi interaktif step-by-step algoritma Line DDA, Bresenham, Midpoint Circle & Ellipse, serta drawing bangun datar.">
+  <title>Line Algorithm Simulator — DDA, Bresenham, Midpoint | Shapes</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -14,13 +14,14 @@
     <header class="header">
       <div class="header-title">
         <h1>🔬 Line Algorithm Simulator</h1>
-        <span class="badge">Phase 2</span>
+        <span class="badge">Phase 3</span>
       </div>
 
       <!-- Tab Bar -->
       <div class="tab-bar">
         <button class="tab-btn active" data-tab="line">📐 Line Algorithm</button>
         <button class="tab-btn" data-tab="shapes">🔷 Shapes</button>
+        <button class="tab-btn" data-tab="curves">⭕ Curves</button>
       </div>
 
       <!-- Line Algorithm Controls -->
@@ -68,6 +69,19 @@
               <option value="bresenham">Bresenham</option>
             </select>
           </div>
+        </div>
+      </div>
+
+      <!-- Curves Controls -->
+      <div id="curves-controls" class="tab-content hidden">
+        <div class="header-controls">
+          <div class="control-group">
+            <label>📐 Midpoint Curve Algorithm</label>
+            <span style="font-size: 11px; color: var(--text-secondary);">
+              Circle: Fokus Oktan 1 (0°–45°) &rarr; Replikasi 8 Oktan (CCW) | Ellipse: 4 Kuadran (Region 1 & 2)
+            </span>
+          </div>
+          <div id="symmetry-legend-container" class="symmetry-legend"></div>
         </div>
       </div>
 
@@ -121,8 +135,9 @@
         <div class="panel-header">
           <span class="icon">📝</span> <span id="code-panel-title">Algorithm Code (C#)</span>
         </div>
-        <!-- Shape Parameters (visible only in shapes mode) -->
+        <!-- Extra Parameters (shapes / curves mode) -->
         <div id="shape-params-bar" class="shape-params-bar hidden"></div>
+        <div id="curve-params-bar" class="curve-params-bar hidden"></div>
         <div class="code-container" id="code-container">
           <!-- Populated by codeview.js -->
         </div>
@@ -136,8 +151,9 @@
         <div class="panel-header">
           <span class="icon">📊</span> <span id="trace-panel-title">Tracing Table</span>
         </div>
-        <!-- Shape Selector (visible only in shapes mode) -->
+        <!-- Selector Bar (shapes / curves mode) -->
         <div id="shape-selector-bar" class="shape-selector-bar hidden"></div>
+        <div id="curve-selector-bar" class="curve-selector-bar hidden"></div>
         <div class="trace-scroll" id="trace-scroll">
           <table>
             <thead id="trace-head"></thead>
