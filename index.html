@@ -22,6 +22,7 @@
         <button class="tab-btn active" data-tab="line">📐 Line Algorithm</button>
         <button class="tab-btn" data-tab="shapes">🔷 Shapes</button>
         <button class="tab-btn" data-tab="curves">⭕ Curves</button>
+        <button class="tab-btn" data-tab="transform">🔄 Transformasi 2D</button>
       </div>
 
       <!-- Line Algorithm Controls -->
@@ -85,6 +86,47 @@
         </div>
       </div>
 
+      <!-- Transform Controls -->
+      <div id="transform-controls" class="tab-content hidden">
+        <div class="header-controls">
+          <div class="control-group">
+            <label for="transform-type-select">Transformasi:</label>
+            <select id="transform-type-select">
+              <option value="translate">➡️ Translasi (Translation)</option>
+              <option value="reflect">🪞 Refleksi (Reflection)</option>
+              <option value="rotate">🔄 Rotasi (Rotation)</option>
+              <option value="scale">🔍 Dilatasi (Scaling)</option>
+              <option value="shear">📐 Shear (Geseran)</option>
+            </select>
+          </div>
+
+          <div class="control-group">
+            <label for="transform-obj-select">Objek:</label>
+            <select id="transform-obj-select">
+              <option value="triangle">🔺 Segitiga ABC</option>
+              <option value="square">⬜ Persegi ABCD</option>
+              <option value="quad">🔷 Segiempat</option>
+              <option value="house">🏠 Rumah Poligon</option>
+              <option value="line">📏 Garis AB</option>
+              <option value="point">📍 Titik P</option>
+              <option value="custom">✏️ Custom Koordinat</option>
+            </select>
+          </div>
+
+          <div class="control-separator"></div>
+
+          <!-- Dynamic parameter inputs for transform -->
+          <div id="transform-params-container" class="transform-params-container"></div>
+
+          <div class="control-separator"></div>
+
+          <!-- Presets -->
+          <div class="control-group" id="transform-preset-container">
+            <label>Preset:</label>
+          </div>
+        </div>
+      </div>
+
       <!-- Playback Row (shared) -->
       <div class="header-playback">
         <button id="btn-play" class="play-btn primary">▶ Play</button>
@@ -97,6 +139,14 @@
           <label>Speed:</label>
           <input type="range" id="speed-slider" min="1" max="100" value="40">
           <span class="speed-label" id="speed-label">600ms</span>
+        </div>
+
+        <!-- Transform Animation Interpolation (t) slider -->
+        <div class="control-group hidden" id="transform-anim-group">
+          <div class="control-separator"></div>
+          <label>Transisi (t):</label>
+          <input type="range" id="transform-t-slider" min="0" max="100" value="100">
+          <span class="speed-label" id="transform-t-label">100%</span>
         </div>
 
         <div class="control-separator"></div>
@@ -133,13 +183,17 @@
       <!-- Column 2: Code View & Step Info -->
       <div class="code-panel">
         <div class="panel-header">
-          <span class="icon">📝</span> <span id="code-panel-title">Algorithm Code (C#)</span>
+          <span class="icon" id="code-panel-icon">📝</span> <span id="code-panel-title">Algorithm Code (C#)</span>
         </div>
         <!-- Extra Parameters (shapes / curves mode) -->
         <div id="shape-params-bar" class="shape-params-bar hidden"></div>
         <div id="curve-params-bar" class="curve-params-bar hidden"></div>
         <div class="code-container" id="code-container">
           <!-- Populated by codeview.js -->
+        </div>
+        <!-- Transform Matrix & Theory Panel -->
+        <div id="transform-matrix-panel" class="transform-matrix-panel hidden">
+          <!-- Populated by transform.js -->
         </div>
         <div class="step-description" id="step-description">
           Tekan "Step" atau "Play" untuk mulai simulasi.
@@ -149,7 +203,7 @@
       <!-- Column 3: Tracing Table & Shape Selector -->
       <div class="trace-panel">
         <div class="panel-header">
-          <span class="icon">📊</span> <span id="trace-panel-title">Tracing Table</span>
+          <span class="icon" id="trace-panel-icon">📊</span> <span id="trace-panel-title">Tracing Table</span>
         </div>
         <!-- Selector Bar (shapes / curves mode) -->
         <div id="shape-selector-bar" class="shape-selector-bar hidden"></div>
@@ -159,6 +213,10 @@
             <thead id="trace-head"></thead>
             <tbody id="trace-body"></tbody>
           </table>
+        </div>
+        <!-- Transform Manual Calculation Panel -->
+        <div id="transform-calc-panel" class="transform-calc-panel hidden">
+          <!-- Populated by transform.js -->
         </div>
       </div>
 

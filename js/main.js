@@ -19,6 +19,12 @@ import {
 import {
   CURVES, CURVE_LIST, OCTANT_COLORS, QUADRANT_COLORS,
 } from './curves.js';
+import {
+  TRANSFORM_OBJECTS, TRANSFORM_PRESETS,
+  computeTransformationMatrix, generateManualCalculation,
+  buildMatrixPanelHtml, buildCalculationPanelHtml,
+  transformStepGenerator, drawTransformOverlay, fmt, cleanNumber,
+} from './transform.js';
 
 // ---------- SINGLETON INSTANCES ----------
 const grid = new Grid();
@@ -27,9 +33,21 @@ const tracer = new Tracer();
 const simulator = new Simulator();
 
 // ---------- STATE ----------
-let currentTab = 'line';    // 'line' | 'shapes' | 'curves'
+let currentTab = 'line';    // 'line' | 'shapes' | 'curves' | 'transform'
 let currentShape = 'persegi';
 let currentCurve = 'circle';
+let currentTransformType = 'translate';
+let currentTransformObj = 'triangle';
+let customCoords = '2,2; 8,2; 5,7';
+let transformState = {
+  originalVertices: [],
+  transformedVertices: [],
+  activeVertexIndex: null,
+  isComplete: false,
+  type: 'translate',
+  params: { tx: 6, ty: 4 },
+  interpolationT: 1.0,
+};
 
 // ---------- DOM REFERENCES ----------
 let els = {};
@@ -43,6 +61,7 @@ document.addEventListener('DOMContentLoaded', () => {
     lineControls:     document.getElementById('line-controls'),
     shapesControls:   document.getElementById('shapes-controls'),
     curvesControls:   document.getElementById('curves-controls'),
+    transformControls: document.getElementById('transform-controls'),
 
     // Line Controls
     algoSelect:       document.getElementById('algo-select'),
@@ -61,6 +80,17 @@ document.addEventListener('DOMContentLoaded', () => {
     curveParamsBar:   document.getElementById('curve-params-bar'),
     curveSelectorBar: document.getElementById('curve-selector-bar'),
     symmetryLegend:   document.getElementById('symmetry-legend-container'),
+
+    // Transform Controls
+    transformTypeSelect:      document.getElementById('transform-type-select'),
+    transformObjSelect:       document.getElementById('transform-obj-select'),
+    transformParamsContainer: document.getElementById('transform-params-container'),
+    transformPresetContainer: document.getElementById('transform-preset-container'),
+    transformMatrixPanel:     document.getElementById('transform-matrix-panel'),
+    transformCalcPanel:       document.getElementById('transform-calc-panel'),
+    transformAnimGroup:       document.getElementById('transform-anim-group'),
+    transformTSlider:         document.getElementById('transform-t-slider'),
+    transformTLabel:          document.getElementById('transform-t-label'),
 
     // Shared Controls
     gridSizeSelect:   document.getElementById('grid-size-select'),
@@ -87,8 +117,10 @@ document.addEventListener('DOMContentLoaded', () => {
     traceBody:        document.getElementById('trace-body'),
     traceScroll:      document.getElementById('trace-scroll'),
 
-    // Panel titles
+    // Panel titles & icons
+    codePanelIcon:    document.getElementById('code-panel-icon'),
     codePanelTitle:   document.getElementById('code-panel-title'),
+    tracePanelIcon:   document.getElementById('trace-panel-icon'),
     tracePanelTitle:  document.getElementById('trace-panel-title'),
   };
 
@@ -99,12 +131,42 @@ document.addEventListener('DOMContentLoaded', () => {
   tracer.init(els.traceHead, els.traceBody, els.traceScroll);
   simulator.init(grid, codeView, tracer, els.stepDescription, els.stepCounter);
 
+  // Setup transform-specific step listener
+  simulator.onStep((data) => {
+    if (currentTab === 'transform') {
+      transformState.activeVertexIndex = data.activeVertexIndex;
+      transformState.transformedVertices = data.transformedVertices || [];
+      transformState.isComplete = data.isComplete;
+      grid.render();
+
+      // Highlight active card
+      const cards = els.transformCalcPanel.querySelectorAll('.calc-card');
+      cards.forEach(c => c.classList.remove('active-card'));
+      if (data.activeVertexIndex !== null && data.activeVertexIndex !== undefined) {
+        const activeCard = document.getElementById(`calc-card-${data.activeVertexIndex}`);
+        if (activeCard) {
+          activeCard.classList.add('active-card');
+          activeCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+      }
+
+      // Highlight active table row
+      const rows = els.transformCalcPanel.querySelectorAll('.calc-row');
+      rows.forEach(r => r.classList.remove('active-row'));
+      if (data.activeVertexIndex !== null && data.activeVertexIndex !== undefined) {
+        const activeRow = els.transformCalcPanel.querySelector(`.calc-row[data-vertex-idx="${data.activeVertexIndex}"]`);
+        if (activeRow) activeRow.classList.add('active-row');
+      }
+    }
+  });
+
   // Setup event listeners
   setupTabs();
   setupPresets();
   setupControls();
   setupShapeSelector();
   setupCurveSelector();
+  setupTransform();
   setupPlayback();
   setupGridHover();
   setupResizeHandler();
@@ -133,6 +195,7 @@ function setupTabs() {
       els.lineControls.classList.toggle('hidden', tab !== 'line');
       els.shapesControls.classList.toggle('hidden', tab !== 'shapes');
       els.curvesControls.classList.toggle('hidden', tab !== 'curves');
+      els.transformControls.classList.toggle('hidden', tab !== 'transform');
 
       // Show/hide shape-specific panel elements
       els.shapeParamsBar.classList.toggle('hidden', tab !== 'shapes');
@@ -142,15 +205,38 @@ function setupTabs() {
       els.curveParamsBar.classList.toggle('hidden', tab !== 'curves');
       els.curveSelectorBar.classList.toggle('hidden', tab !== 'curves');
 
+      // Show/hide transform specific panel elements
+      els.codeContainer.classList.toggle('hidden', tab === 'transform');
+      els.transformMatrixPanel.classList.toggle('hidden', tab !== 'transform');
+      els.traceScroll.classList.toggle('hidden', tab === 'transform');
+      els.transformCalcPanel.classList.toggle('hidden', tab !== 'transform');
+      els.transformAnimGroup.classList.toggle('hidden', tab !== 'transform');
+
+      // Clear overlay if not transform
+      if (tab !== 'transform') {
+        grid.setOverlay(null);
+      }
+
       // Update panel header labels
       if (tab === 'shapes') {
+        if (els.codePanelIcon) els.codePanelIcon.textContent = '📝';
         els.codePanelTitle.textContent = 'Shape Code (C#)';
+        if (els.tracePanelIcon) els.tracePanelIcon.textContent = '📊';
         els.tracePanelTitle.textContent = 'Shape Trace';
       } else if (tab === 'curves') {
+        if (els.codePanelIcon) els.codePanelIcon.textContent = '📝';
         els.codePanelTitle.textContent = 'Curve Code (C#)';
+        if (els.tracePanelIcon) els.tracePanelIcon.textContent = '📊';
         els.tracePanelTitle.textContent = 'Curve Trace';
+      } else if (tab === 'transform') {
+        if (els.codePanelIcon) els.codePanelIcon.textContent = '📐';
+        els.codePanelTitle.textContent = 'Matriks Homogen 3×3 & Teori';
+        if (els.tracePanelIcon) els.tracePanelIcon.textContent = '🧮';
+        els.tracePanelTitle.textContent = 'Runtutan Perhitungan Manual';
       } else {
+        if (els.codePanelIcon) els.codePanelIcon.textContent = '📝';
         els.codePanelTitle.textContent = 'Algorithm Code (C#)';
+        if (els.tracePanelIcon) els.tracePanelIcon.textContent = '📊';
         els.tracePanelTitle.textContent = 'Tracing Table';
       }
 
@@ -421,6 +507,8 @@ function loadCurrentSimulation() {
     loadShapeSimulation();
   } else if (currentTab === 'curves') {
     loadCurveSimulation();
+  } else if (currentTab === 'transform') {
+    loadTransformSimulation();
   } else {
     loadSimulation();
   }
@@ -600,4 +688,440 @@ function setupResizeHandler() {
       grid.resize();
     }, 150);
   });
+}
+
+// ============================================================
+//  TRANSFORMATION MODE
+// ============================================================
+
+function setupTransform() {
+  if (!els.transformTypeSelect) return;
+
+  // Transform type selection change
+  els.transformTypeSelect.addEventListener('change', () => {
+    currentTransformType = els.transformTypeSelect.value;
+    buildTransformParamsInputs();
+    if (currentTab === 'transform') loadTransformSimulation();
+  });
+
+  // Object selection change
+  els.transformObjSelect.addEventListener('change', () => {
+    currentTransformObj = els.transformObjSelect.value;
+    buildTransformParamsInputs();
+    if (currentTab === 'transform') loadTransformSimulation();
+  });
+
+  // Transition slider (t: 0% to 100%)
+  if (els.transformTSlider) {
+    els.transformTSlider.addEventListener('input', () => {
+      const val = parseInt(els.transformTSlider.value, 10);
+      els.transformTLabel.textContent = `${val}%`;
+      transformState.interpolationT = val / 100;
+      grid.render();
+    });
+  }
+
+  // Interactive clicking on calculation cards or table rows
+  if (els.transformCalcPanel) {
+    els.transformCalcPanel.addEventListener('click', (e) => {
+      const target = e.target.closest('[data-vertex-idx]');
+      if (!target) return;
+      const vIdx = parseInt(target.dataset.vertexIdx, 10);
+      if (isNaN(vIdx)) return;
+
+      transformState.activeVertexIndex = vIdx;
+      grid.render();
+
+      // Update active card
+      const cards = els.transformCalcPanel.querySelectorAll('.calc-card');
+      cards.forEach(c => c.classList.remove('active-card'));
+      const card = document.getElementById(`calc-card-${vIdx}`);
+      if (card) {
+        card.classList.add('active-card');
+        card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }
+
+      // Update active row
+      const rows = els.transformCalcPanel.querySelectorAll('.calc-row');
+      rows.forEach(r => r.classList.remove('active-row'));
+      const row = els.transformCalcPanel.querySelector(`.calc-row[data-vertex-idx="${vIdx}"]`);
+      if (row) row.classList.add('active-row');
+    });
+  }
+
+  // Setup Presets
+  setupTransformPresets();
+
+  // Initial params setup
+  buildTransformParamsInputs();
+}
+
+function setupTransformPresets() {
+  if (!els.transformPresetContainer) return;
+  els.transformPresetContainer.innerHTML = '<label>Preset:</label>';
+
+  TRANSFORM_PRESETS.forEach(preset => {
+    const btn = document.createElement('button');
+    btn.className = 'preset-btn';
+    btn.textContent = preset.label;
+    btn.addEventListener('click', () => {
+      currentTransformType = preset.type;
+      els.transformTypeSelect.value = preset.type;
+      buildTransformParamsInputs(preset.params);
+      if (currentTab === 'transform') loadTransformSimulation();
+    });
+    els.transformPresetContainer.appendChild(btn);
+  });
+}
+
+function buildTransformParamsInputs(overrideParams = null) {
+  if (!els.transformParamsContainer) return;
+  els.transformParamsContainer.innerHTML = '';
+
+  const type = currentTransformType;
+
+  // Custom coordinates input if object is 'custom'
+  if (currentTransformObj === 'custom') {
+    const grp = document.createElement('div');
+    grp.className = 'transform-param-group';
+    grp.innerHTML = `
+      <label>Koordinat (x,y; ...):</label>
+      <input type="text" class="custom-coords-input" id="custom-coords-input" value="${customCoords}" placeholder="e.g. 2,2; 8,2; 5,7">
+    `;
+    const input = grp.querySelector('#custom-coords-input');
+    input.addEventListener('change', () => {
+      customCoords = input.value;
+      if (currentTab === 'transform') loadTransformSimulation();
+    });
+    input.addEventListener('input', () => {
+      customCoords = input.value;
+      if (currentTab === 'transform') loadTransformSimulation();
+    });
+    els.transformParamsContainer.appendChild(grp);
+  }
+
+  if (type === 'translate') {
+    const tx = overrideParams && overrideParams.tx !== undefined ? overrideParams.tx : 6;
+    const ty = overrideParams && overrideParams.ty !== undefined ? overrideParams.ty : 4;
+    const grp = document.createElement('div');
+    grp.className = 'transform-param-group';
+    grp.innerHTML = `
+      <label>Tx:</label>
+      <input type="number" id="input-tx" class="coord-input" value="${tx}">
+      <label>Ty:</label>
+      <input type="number" id="input-ty" class="coord-input" value="${ty}">
+    `;
+    bindInputEvents(grp);
+    els.transformParamsContainer.appendChild(grp);
+  } else if (type === 'reflect') {
+    const sub = overrideParams && overrideParams.subType ? overrideParams.subType : 'x-axis';
+    const k = overrideParams && overrideParams.k !== undefined ? overrideParams.k : 4;
+
+    const grp = document.createElement('div');
+    grp.className = 'transform-param-group';
+    grp.innerHTML = `
+      <label>Cermin:</label>
+      <select id="reflect-sub-select">
+        <option value="x-axis" ${sub === 'x-axis' ? 'selected' : ''}>Sumbu X (y = 0)</option>
+        <option value="y-axis" ${sub === 'y-axis' ? 'selected' : ''}>Sumbu Y (x = 0)</option>
+        <option value="origin" ${sub === 'origin' ? 'selected' : ''}>Titik Asal (0, 0)</option>
+        <option value="y=x" ${sub === 'y=x' ? 'selected' : ''}>Garis y = x</option>
+        <option value="y=-x" ${sub === 'y=-x' ? 'selected' : ''}>Garis y = -x</option>
+        <option value="x=k" ${sub === 'x=k' ? 'selected' : ''}>Garis Vertikal x = k</option>
+        <option value="y=k" ${sub === 'y=k' ? 'selected' : ''}>Garis Horizontal y = k</option>
+      </select>
+      <span id="k-param-wrap" class="${sub === 'x=k' || sub === 'y=k' ? '' : 'hidden'}">
+        <label>k:</label>
+        <input type="number" id="input-refl-k" class="coord-input" value="${k}">
+      </span>
+    `;
+
+    const subSelect = grp.querySelector('#reflect-sub-select');
+    const kWrap = grp.querySelector('#k-param-wrap');
+    subSelect.addEventListener('change', () => {
+      const val = subSelect.value;
+      kWrap.classList.toggle('hidden', val !== 'x=k' && val !== 'y=k');
+      if (currentTab === 'transform') loadTransformSimulation();
+    });
+
+    bindInputEvents(grp);
+    els.transformParamsContainer.appendChild(grp);
+  } else if (type === 'rotate') {
+    const deg = overrideParams && overrideParams.deg !== undefined ? overrideParams.deg : 45;
+    const xp = overrideParams && overrideParams.xp !== undefined ? overrideParams.xp : 0;
+    const yp = overrideParams && overrideParams.yp !== undefined ? overrideParams.yp : 0;
+
+    const grp = document.createElement('div');
+    grp.className = 'transform-param-group';
+    grp.innerHTML = `
+      <label>Sudut θ:</label>
+      <input type="number" id="input-rot-deg" class="coord-input" value="${deg}" style="width: 58px;">
+      <span style="font-size: 11px; color: var(--text-muted);">°</span>
+      <div style="display: inline-flex; gap: 3px; margin: 0 4px;">
+        <button type="button" class="preset-btn rot-quick" data-deg="30">30°</button>
+        <button type="button" class="preset-btn rot-quick" data-deg="45">45°</button>
+        <button type="button" class="preset-btn rot-quick" data-deg="60">60°</button>
+        <button type="button" class="preset-btn rot-quick" data-deg="90">90°</button>
+        <button type="button" class="preset-btn rot-quick" data-deg="180">180°</button>
+        <button type="button" class="preset-btn rot-quick" data-deg="-90">-90°</button>
+      </div>
+      <label>Pivot (xp, yp):</label>
+      <input type="number" id="input-rot-xp" class="coord-input" value="${xp}" title="xp">
+      <input type="number" id="input-rot-yp" class="coord-input" value="${yp}" title="yp">
+    `;
+
+    grp.querySelectorAll('.rot-quick').forEach(b => {
+      b.addEventListener('click', () => {
+        const d = parseInt(b.dataset.deg, 10);
+        grp.querySelector('#input-rot-deg').value = d;
+        if (currentTab === 'transform') loadTransformSimulation();
+      });
+    });
+
+    bindInputEvents(grp);
+    els.transformParamsContainer.appendChild(grp);
+  } else if (type === 'scale') {
+    const sx = overrideParams && overrideParams.sx !== undefined ? overrideParams.sx : 2;
+    const sy = overrideParams && overrideParams.sy !== undefined ? overrideParams.sy : 2;
+    const xp = overrideParams && overrideParams.xp !== undefined ? overrideParams.xp : 0;
+    const yp = overrideParams && overrideParams.yp !== undefined ? overrideParams.yp : 0;
+
+    const grp = document.createElement('div');
+    grp.className = 'transform-param-group';
+    grp.innerHTML = `
+      <label>Sx:</label>
+      <input type="number" step="0.5" id="input-scale-sx" class="coord-input" value="${sx}">
+      <label>Sy:</label>
+      <input type="number" step="0.5" id="input-scale-sy" class="coord-input" value="${sy}">
+      <div style="display: inline-flex; gap: 3px; margin: 0 4px;">
+        <button type="button" class="preset-btn scale-quick" data-s="0.5">0.5x</button>
+        <button type="button" class="preset-btn scale-quick" data-s="1.5">1.5x</button>
+        <button type="button" class="preset-btn scale-quick" data-s="2">2x</button>
+        <button type="button" class="preset-btn scale-quick" data-s="-1">-1x</button>
+      </div>
+      <label>Pivot (xp, yp):</label>
+      <input type="number" id="input-scale-xp" class="coord-input" value="${xp}" title="xp">
+      <input type="number" id="input-scale-yp" class="coord-input" value="${yp}" title="yp">
+    `;
+
+    grp.querySelectorAll('.scale-quick').forEach(b => {
+      b.addEventListener('click', () => {
+        const s = parseFloat(b.dataset.s);
+        grp.querySelector('#input-scale-sx').value = s;
+        grp.querySelector('#input-scale-sy').value = s;
+        if (currentTab === 'transform') loadTransformSimulation();
+      });
+    });
+
+    bindInputEvents(grp);
+    els.transformParamsContainer.appendChild(grp);
+  } else if (type === 'shear') {
+    const stype = overrideParams && overrideParams.type ? overrideParams.type : 'horizontal';
+    const shx = overrideParams && overrideParams.shx !== undefined ? overrideParams.shx : 1.5;
+    const shy = overrideParams && overrideParams.shy !== undefined ? overrideParams.shy : 1.0;
+    const yref = overrideParams && overrideParams.yref !== undefined ? overrideParams.yref : 0;
+    const xref = overrideParams && overrideParams.xref !== undefined ? overrideParams.xref : 0;
+
+    const grp = document.createElement('div');
+    grp.className = 'transform-param-group';
+    grp.innerHTML = `
+      <label>Arah:</label>
+      <select id="shear-type-select">
+        <option value="horizontal" ${stype === 'horizontal' ? 'selected' : ''}>Horizontal (X-Shear)</option>
+        <option value="vertical" ${stype === 'vertical' ? 'selected' : ''}>Vertikal (Y-Shear)</option>
+        <option value="both" ${stype === 'both' ? 'selected' : ''}>Simultan (X & Y)</option>
+      </select>
+      <span id="shx-wrap" class="${stype === 'vertical' ? 'hidden' : ''}">
+        <label>Shx:</label>
+        <input type="number" step="0.5" id="input-shear-shx" class="coord-input" value="${shx}">
+        <label>y_ref:</label>
+        <input type="number" id="input-shear-yref" class="coord-input" value="${yref}">
+      </span>
+      <span id="shy-wrap" class="${stype === 'horizontal' ? 'hidden' : ''}">
+        <label>Shy:</label>
+        <input type="number" step="0.5" id="input-shear-shy" class="coord-input" value="${shy}">
+        <label>x_ref:</label>
+        <input type="number" id="input-shear-xref" class="coord-input" value="${xref}">
+      </span>
+    `;
+
+    const sel = grp.querySelector('#shear-type-select');
+    const shxWrap = grp.querySelector('#shx-wrap');
+    const shyWrap = grp.querySelector('#shy-wrap');
+    sel.addEventListener('change', () => {
+      shxWrap.classList.toggle('hidden', sel.value === 'vertical');
+      shyWrap.classList.toggle('hidden', sel.value === 'horizontal');
+      if (currentTab === 'transform') loadTransformSimulation();
+    });
+
+    bindInputEvents(grp);
+    els.transformParamsContainer.appendChild(grp);
+  }
+}
+
+function bindInputEvents(container) {
+  const inputs = container.querySelectorAll('input, select');
+  inputs.forEach(input => {
+    input.addEventListener('input', () => {
+      if (currentTab === 'transform') loadTransformSimulation();
+    });
+    input.addEventListener('change', () => {
+      if (currentTab === 'transform') loadTransformSimulation();
+    });
+  });
+}
+
+function getTransformParamsFromInputs() {
+  const type = currentTransformType;
+  const p = {};
+
+  if (type === 'translate') {
+    const tx = parseFloat(document.getElementById('input-tx')?.value || 0);
+    const ty = parseFloat(document.getElementById('input-ty')?.value || 0);
+    p.tx = isNaN(tx) ? 0 : tx;
+    p.ty = isNaN(ty) ? 0 : ty;
+  } else if (type === 'reflect') {
+    p.subType = document.getElementById('reflect-sub-select')?.value || 'x-axis';
+    const k = parseFloat(document.getElementById('input-refl-k')?.value || 0);
+    p.k = isNaN(k) ? 0 : k;
+  } else if (type === 'rotate') {
+    const deg = parseFloat(document.getElementById('input-rot-deg')?.value || 0);
+    const xp = parseFloat(document.getElementById('input-rot-xp')?.value || 0);
+    const yp = parseFloat(document.getElementById('input-rot-yp')?.value || 0);
+    p.deg = isNaN(deg) ? 0 : deg;
+    p.xp = isNaN(xp) ? 0 : xp;
+    p.yp = isNaN(yp) ? 0 : yp;
+  } else if (type === 'scale') {
+    const sx = parseFloat(document.getElementById('input-scale-sx')?.value || 1);
+    const sy = parseFloat(document.getElementById('input-scale-sy')?.value || 1);
+    const xp = parseFloat(document.getElementById('input-scale-xp')?.value || 0);
+    const yp = parseFloat(document.getElementById('input-scale-yp')?.value || 0);
+    p.sx = isNaN(sx) ? 1 : sx;
+    p.sy = isNaN(sy) ? 1 : sy;
+    p.xp = isNaN(xp) ? 0 : xp;
+    p.yp = isNaN(yp) ? 0 : yp;
+  } else if (type === 'shear') {
+    p.type = document.getElementById('shear-type-select')?.value || 'horizontal';
+    const shx = parseFloat(document.getElementById('input-shear-shx')?.value || 0);
+    const shy = parseFloat(document.getElementById('input-shear-shy')?.value || 0);
+    const yref = parseFloat(document.getElementById('input-shear-yref')?.value || 0);
+    const xref = parseFloat(document.getElementById('input-shear-xref')?.value || 0);
+    p.shx = isNaN(shx) ? 0 : shx;
+    p.shy = isNaN(shy) ? 0 : shy;
+    p.yref = isNaN(yref) ? 0 : yref;
+    p.xref = isNaN(xref) ? 0 : xref;
+  }
+
+  return p;
+}
+
+function getTransformVertices() {
+  if (currentTransformObj === 'custom') {
+    const pairs = (customCoords || '').split(';');
+    const v = [];
+    for (let i = 0; i < pairs.length; i++) {
+      const parts = pairs[i].split(',');
+      if (parts.length >= 2) {
+        const x = parseFloat(parts[0].trim());
+        const y = parseFloat(parts[1].trim());
+        if (!isNaN(x) && !isNaN(y)) {
+          v.push({ label: String.fromCharCode(65 + (i % 26)), x, y });
+        }
+      }
+    }
+    return v.length > 0 ? v : [{ label: 'A', x: 2, y: 2 }, { label: 'B', x: 8, y: 2 }, { label: 'C', x: 5, y: 7 }];
+  }
+
+  const obj = TRANSFORM_OBJECTS[currentTransformObj];
+  return obj ? obj.vertices : TRANSFORM_OBJECTS.triangle.vertices;
+}
+
+function loadTransformSimulation() {
+  const vertices = getTransformVertices();
+  const params = getTransformParamsFromInputs();
+  const matrixInfo = computeTransformationMatrix(currentTransformType, params);
+  const calcs = generateManualCalculation(vertices, matrixInfo, currentTransformType, params);
+
+  // Render Column 2 (Matrix & Theory)
+  els.transformMatrixPanel.innerHTML = buildMatrixPanelHtml(matrixInfo, currentTransformType, params);
+
+  // Render Column 3 (Manual Calculation Breakdown)
+  els.transformCalcPanel.innerHTML = buildCalculationPanelHtml(calcs, null);
+
+  // Update transformation state
+  const tVal = els.transformTSlider ? parseInt(els.transformTSlider.value, 10) / 100 : 1.0;
+  transformState = {
+    originalVertices: vertices,
+    transformedVertices: calcs.map(c => ({ label: c.label, x: c.to.x, y: c.to.y })),
+    activeVertexIndex: null,
+    isComplete: true,
+    type: currentTransformType,
+    params,
+    interpolationT: tVal,
+  };
+
+  // Compute and rasterize pixels onto grid
+  grid.clearPixels();
+  const rasterPixels = [];
+
+  // 1. Original shape edge pixels (dim cyan)
+  if (vertices.length >= 2) {
+    for (let i = 0; i < vertices.length; i++) {
+      const p1 = vertices[i];
+      const p2 = vertices[(i + 1) % vertices.length];
+      if (vertices.length === 2 && i === 1) break;
+      const pxs = computePixelsDDA(Math.round(p1.x), Math.round(p1.y), Math.round(p2.x), Math.round(p2.y));
+      for (const p of pxs) {
+        rasterPixels.push({ x: p.x, y: p.y, color: 'rgba(0, 221, 184, 0.45)' });
+      }
+    }
+  }
+
+  // 2. Transformed shape edge pixels (vibrant magenta)
+  if (calcs.length >= 2) {
+    for (let i = 0; i < calcs.length; i++) {
+      const p1 = calcs[i].to;
+      const p2 = calcs[(i + 1) % calcs.length].to;
+      if (calcs.length === 2 && i === 1) break;
+      const pxs = computePixelsDDA(Math.round(p1.x), Math.round(p1.y), Math.round(p2.x), Math.round(p2.y));
+      for (const p of pxs) {
+        rasterPixels.push({ x: p.x, y: p.y, color: '#ff3366' });
+      }
+    }
+  }
+
+  grid.putPixels(rasterPixels);
+
+  // Set grid overlay callback
+  grid.setOverlay((ctx, cs, half, total) => {
+    drawTransformOverlay(ctx, cs, half, total, transformState);
+  });
+
+  // Prepare generator for simulator
+  const gen = transformStepGenerator(vertices, matrixInfo, currentTransformType, params);
+  simulator.load(gen, [], []);
+
+  // Update info bar
+  updateTransformInfoBar(matrixInfo, vertices);
+  updatePlaybackUI({ playing: false, finished: false });
+}
+
+function updateTransformInfoBar(matrixInfo, vertices) {
+  const detStr = fmt(matrixInfo.det);
+  const areaStr = matrixInfo.isAreaPreserved ? 'Tetap (1×)' : `${fmt(matrixInfo.areaFactor)}×`;
+  const orientStr = matrixInfo.isOrientationReversed ? 'Terbalik (Cermin)' : 'Normal';
+
+  els.infoBar.innerHTML = `
+    <span class="info-item"><strong>Transformasi:</strong> ${matrixInfo.title}</span>
+    <span class="info-sep">|</span>
+    <span class="info-item"><strong>Objek:</strong> ${vertices.map(v => v.label).join('-')} (${vertices.length} titik)</span>
+    <span class="info-sep">|</span>
+    <span class="info-item"><strong>det(M):</strong> ${detStr}</span>
+    <span class="info-sep">|</span>
+    <span class="info-item"><strong>Luas:</strong> ${areaStr}</span>
+    <span class="info-sep">|</span>
+    <span class="info-item"><strong>Orientasi:</strong> ${orientStr}</span>
+    <span class="info-sep">|</span>
+    <span class="info-item"><strong>Dimensi:</strong> Matriks Homogen 3×3</span>
+  `;
 }

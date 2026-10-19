@@ -102,6 +102,34 @@ export class Grid {
     this.render();
   }
 
+  /** Set overlay drawing callback: cb(ctx, cs, half, total) */
+  setOverlay(cb) {
+    this._overlayCb = cb;
+    this.render();
+  }
+
+  /** Convert Cartesian coordinates (x, y) to canvas pixel center { cx, cy } */
+  coordToCanvas(x, y) {
+    const cs = this.cellSize;
+    const half = this.gridHalf;
+    return {
+      cx: (x + half) * cs + cs / 2,
+      cy: (half - y) * cs + cs / 2,
+    };
+  }
+
+  /** Convert canvas pixel coordinates { cx, cy } to Cartesian (x, y) */
+  canvasToCoord(cx, cy) {
+    const cs = this.cellSize;
+    const half = this.gridHalf;
+    const col = Math.floor(cx / cs);
+    const row = Math.floor(cy / cs);
+    return {
+      x: col - half,
+      y: half - row,
+    };
+  }
+
   /** Set hover callback */
   onHover(cb) {
     this._onHover = cb;
@@ -132,10 +160,17 @@ export class Grid {
     // 4. Active pixels
     this._drawPixels(ctx, cs, half);
 
-    // 5. Axis labels
+    // 5. Custom Overlay layer (for transformations, vectors, annotations)
+    if (this._overlayCb) {
+      ctx.save();
+      this._overlayCb(ctx, cs, half, total);
+      ctx.restore();
+    }
+
+    // 6. Axis labels
     this._drawAxisLabels(ctx, cs, half, count);
 
-    // 6. Hover highlight
+    // 7. Hover highlight
     if (this.hoverCell) {
       this._drawHoverCell(ctx, cs, half);
     }

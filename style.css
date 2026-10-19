@@ -805,4 +805,474 @@ input[type="range"]::-moz-range-thumb {
   display: inline-block;
 }
 
+/* ============================================================
+   PHASE 4: 2D TRANSFORMATION & 3x3 HOMOGENEOUS MATRIX STYLES
+   ============================================================ */
+
+/* Tab Active State */
+.tab-btn.active[data-tab="transform"] {
+  color: var(--accent-amber);
+  border-bottom-color: var(--accent-amber);
+}
+
+/* Transform Params Container in Header */
+.transform-params-container {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.transform-param-group {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.transform-param-group label {
+  font-size: 11px;
+  color: var(--text-secondary);
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.transform-param-group select,
+.transform-param-group input[type="number"],
+.transform-param-group input[type="text"] {
+  background: var(--bg-input);
+  border: 1px solid var(--border-medium);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  padding: 3px 6px;
+  outline: none;
+}
+
+.transform-param-group input[type="text"].custom-coords-input {
+  width: 140px;
+}
+
+/* Preset Buttons for Transform */
+#transform-preset-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+/* ---------- COLUMN 2: MATRIX 3x3 & THEORY PANEL ---------- */
+.transform-matrix-panel {
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.theory-hero {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--border-subtle);
+  padding-bottom: 8px;
+}
+
+.theory-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--accent-amber);
+  letter-spacing: 0.3px;
+}
+
+.theory-badge {
+  font-size: 10px;
+  font-family: 'JetBrains Mono', monospace;
+  padding: 2px 7px;
+  border-radius: 10px;
+  background: rgba(255, 170, 0, 0.12);
+  color: var(--accent-amber);
+  border: 1px solid rgba(255, 170, 0, 0.3);
+}
+
+.theory-section {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.section-label {
+  font-size: 11px;
+  color: var(--text-secondary);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* 3x3 Matrix Visual Box */
+.matrix-3x3-container {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  padding: 6px 14px;
+  background: rgba(12, 12, 34, 0.7);
+  border-radius: var(--radius);
+  border: 1px solid var(--border-subtle);
+  margin: 4px 0;
+  align-self: flex-start;
+}
+
+.matrix-bracket-left,
+.matrix-bracket-right {
+  width: 8px;
+  height: 80px;
+  border: 2px solid var(--accent-amber);
+}
+
+.matrix-bracket-left {
+  border-right: none;
+  border-top-left-radius: 6px;
+  border-bottom-left-radius: 6px;
+}
+
+.matrix-bracket-right {
+  border-left: none;
+  border-top-right-radius: 6px;
+  border-bottom-right-radius: 6px;
+}
+
+.matrix-grid-3x3 {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(46px, 1fr));
+  gap: 6px 14px;
+  padding: 4px 10px;
+  text-align: center;
+}
+
+.m-cell {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.m-cell.highlight-cell {
+  color: var(--accent-cyan);
+}
+
+.m-cell.accent-cell {
+  color: var(--accent-amber);
+}
+
+.m-cell.dim-cell {
+  color: var(--text-muted);
+}
+
+/* Decomposition Box */
+.matrix-decomp-box {
+  background: rgba(255, 170, 0, 0.04);
+  border: 1px solid rgba(255, 170, 0, 0.2);
+  border-radius: var(--radius-sm);
+  padding: 8px 12px;
+  font-size: 11px;
+}
+
+.decomp-title {
+  font-weight: 600;
+  color: var(--accent-amber);
+  margin-bottom: 4px;
+}
+
+.decomp-note {
+  font-family: 'JetBrains Mono', monospace;
+  color: var(--text-secondary);
+  font-size: 10.5px;
+  margin-bottom: 6px;
+}
+
+.decomp-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.decomp-step {
+  color: var(--text-secondary);
+  font-size: 11px;
+}
+
+.step-badge {
+  font-size: 9px;
+  font-family: 'JetBrains Mono', monospace;
+  background: var(--bg-elevated);
+  padding: 1px 5px;
+  border-radius: 3px;
+  color: var(--accent-cyan);
+}
+
+/* Homogeneous Coordinates Explainer Card */
+.homogeneous-explainer {
+  background: rgba(17, 17, 51, 0.6);
+  border: 1px solid var(--border-medium);
+  border-radius: var(--radius);
+  padding: 10px 12px;
+}
+
+.explainer-header {
+  font-size: 11.5px;
+  color: var(--accent-cyan);
+  margin-bottom: 6px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.explainer-body p {
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--text-secondary);
+  margin-bottom: 6px;
+}
+
+.explainer-body p:last-child {
+  margin-bottom: 0;
+}
+
+.explainer-body code {
+  font-family: 'JetBrains Mono', monospace;
+  color: var(--accent-amber);
+  background: rgba(255, 255, 255, 0.05);
+  padding: 1px 4px;
+  border-radius: 3px;
+  font-size: 10.5px;
+}
+
+/* Geometric Invariants */
+.geometric-props {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  background: rgba(12, 12, 34, 0.5);
+  border-radius: var(--radius-sm);
+  padding: 8px 12px;
+  border: 1px solid var(--border-subtle);
+}
+
+.prop-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 11px;
+}
+
+.prop-label {
+  color: var(--text-muted);
+}
+
+.prop-val {
+  font-family: 'JetBrains Mono', monospace;
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+.prop-val.negative {
+  color: var(--accent-magenta);
+}
+
+/* ---------- COLUMN 3: STEP-BY-STEP CALCULATION PANEL ---------- */
+.transform-calc-panel {
+  flex: 1;
+  overflow-y: auto;
+  padding: 10px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.calc-section-title {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-secondary);
+  margin-bottom: 6px;
+}
+
+/* Summary Table */
+.calc-summary-table-wrap {
+  overflow-x: auto;
+}
+
+.calc-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+}
+
+.calc-table th {
+  background: var(--bg-elevated);
+  color: var(--text-secondary);
+  padding: 5px 8px;
+  font-size: 10px;
+  font-weight: 600;
+  text-align: center;
+  border: 1px solid var(--border-subtle);
+}
+
+.calc-table td {
+  padding: 4px 8px;
+  text-align: center;
+  border: 1px solid var(--border-subtle);
+  color: var(--text-primary);
+}
+
+.calc-table .res-coord {
+  color: var(--accent-magenta);
+  font-weight: 600;
+}
+
+.calc-row.active-row td {
+  background: rgba(255, 51, 102, 0.1);
+  color: var(--accent-magenta);
+  border-color: rgba(255, 51, 102, 0.4);
+}
+
+/* Calculation Cards */
+.calc-cards-container {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.calc-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-medium);
+  border-radius: var(--radius);
+  overflow: hidden;
+  transition: all 0.25s ease;
+}
+
+.calc-card.active-card {
+  border-color: var(--accent-magenta);
+  box-shadow: 0 0 12px rgba(255, 51, 102, 0.25);
+  transform: translateY(-1px);
+}
+
+.calc-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 12px;
+  background: var(--bg-elevated);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.vertex-badge {
+  font-weight: 700;
+  font-size: 11.5px;
+  color: var(--accent-cyan);
+}
+
+.coord-flow {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+
+.glow-val {
+  color: var(--accent-magenta);
+}
+
+.calc-card-body {
+  padding: 8px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* Matrix Vector Visual */
+.matrix-multi-visual {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--accent-amber);
+  margin-top: 2px;
+}
+
+.bracket-group {
+  padding: 1px 4px;
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 3px;
+}
+
+.math-op {
+  color: var(--text-muted);
+}
+
+/* Detailed Math Row */
+.step-math-row {
+  background: rgba(7, 7, 20, 0.6);
+  border-radius: 4px;
+  padding: 5px 8px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+}
+
+.step-math-row.dim {
+  opacity: 0.6;
+}
+
+.math-row-title {
+  color: var(--accent-cyan);
+  font-size: 10px;
+  font-weight: 600;
+  margin-bottom: 2px;
+}
+
+.math-row-expr {
+  color: var(--text-secondary);
+  font-size: 10.5px;
+}
+
+.math-row-sub {
+  color: var(--text-muted);
+  font-size: 10px;
+}
+
+.math-row-res {
+  color: var(--text-primary);
+  font-size: 11px;
+  margin-top: 2px;
+}
+
+.ans-num {
+  color: var(--accent-green);
+}
+
+/* Intuitive Geometric Explanation Note */
+.intuitive-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  background: rgba(0, 255, 204, 0.04);
+  border-left: 2px solid var(--accent-cyan);
+  padding: 5px 8px;
+  border-radius: 0 4px 4px 0;
+  font-size: 10.5px;
+  color: var(--text-secondary);
+  line-height: 1.45;
+}
+
+.note-text code {
+  color: var(--accent-amber);
+}
+
+
 
