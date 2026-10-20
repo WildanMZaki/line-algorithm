@@ -23,6 +23,7 @@
         <button class="tab-btn" data-tab="shapes">🔷 Shapes</button>
         <button class="tab-btn" data-tab="curves">⭕ Curves</button>
         <button class="tab-btn" data-tab="transform">🔄 Transformasi 2D</button>
+        <button class="tab-btn" data-tab="animations">🎬 Animasi 2D</button>
       </div>
 
       <!-- Line Algorithm Controls -->
@@ -127,6 +128,20 @@
         </div>
       </div>
 
+      <!-- Animations Controls -->
+      <div id="animations-controls" class="tab-content hidden">
+        <div class="header-controls">
+          <div class="control-group">
+            <label>Mode:</label>
+            <span style="font-size: 11px; color: var(--accent-amber); font-weight: 600;">2D Animation Showcase</span>
+          </div>
+          <div class="control-separator"></div>
+          <span style="font-size: 11px; color: var(--text-secondary);">
+            Pilih simulasi animasi pada sidebar kiri. Anda dapat berinteraksi langsung melalui klik canvas atau tombol keyboard (Panah / WASD)!
+          </span>
+        </div>
+      </div>
+
       <!-- Playback Row (shared) -->
       <div class="header-playback">
         <button id="btn-play" class="play-btn primary">▶ Play</button>
@@ -174,6 +189,39 @@
     <!-- ===== MAIN CONTENT ===== -->
     <main class="main">
 
+      <!-- Column 0: Animations Showcase Sidebar -->
+      <aside class="anim-sidebar hidden" id="anim-sidebar">
+        <div class="sidebar-title">🎭 Showcase</div>
+        <button class="anim-nav-btn active" data-anim="radar">
+          <span class="anim-icon">🛰️</span>
+          <div class="anim-info">
+            <span class="anim-name">Radar Sweep</span>
+            <span class="anim-desc">Rotasi berkala + blip</span>
+          </div>
+        </button>
+        <button class="anim-nav-btn" data-anim="kinematic">
+          <span class="anim-icon">🔺</span>
+          <div class="anim-info">
+            <span class="anim-name">Kinematik Gerak</span>
+            <span class="anim-desc">Rotasi dulu + translasi</span>
+          </div>
+        </button>
+        <button class="anim-nav-btn" data-anim="explosion">
+          <span class="anim-icon">💥</span>
+          <div class="anim-info">
+            <span class="anim-name">Animasi Ledakan</span>
+            <span class="anim-desc">Lingkaran + dilatasi radial</span>
+          </div>
+        </button>
+        <button class="anim-nav-btn" data-anim="smoke">
+          <span class="anim-icon">💨</span>
+          <div class="anim-info">
+            <span class="anim-name">Sebaran Asap</span>
+            <span class="anim-desc">Multi-elips + apung</span>
+          </div>
+        </button>
+      </aside>
+
       <!-- Column 1: Grid Canvas -->
       <div class="grid-panel">
         <canvas id="grid-canvas"></canvas>
@@ -194,6 +242,10 @@
         <!-- Transform Matrix & Theory Panel -->
         <div id="transform-matrix-panel" class="transform-matrix-panel hidden">
           <!-- Populated by transform.js -->
+        </div>
+        <!-- Animation Code Container -->
+        <div id="anim-code-container" class="code-container hidden">
+          <!-- Populated by animations.js -->
         </div>
         <div class="step-description" id="step-description">
           Tekan "Step" atau "Play" untuk mulai simulasi.
@@ -217,6 +269,10 @@
         <!-- Transform Manual Calculation Panel -->
         <div id="transform-calc-panel" class="transform-calc-panel hidden">
           <!-- Populated by transform.js -->
+        </div>
+        <!-- Animation Inspector Panel -->
+        <div id="anim-inspector-panel" class="anim-inspector-panel hidden">
+          <!-- Populated by animations.js -->
         </div>
       </div>
 

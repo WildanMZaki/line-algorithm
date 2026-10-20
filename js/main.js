@@ -25,6 +25,7 @@ import {
   buildMatrixPanelHtml, buildCalculationPanelHtml,
   transformStepGenerator, drawTransformOverlay, fmt, cleanNumber,
 } from './transform.js';
+import { animationManager } from './animations.js';
 
 // ---------- SINGLETON INSTANCES ----------
 const grid = new Grid();
@@ -33,7 +34,7 @@ const tracer = new Tracer();
 const simulator = new Simulator();
 
 // ---------- STATE ----------
-let currentTab = 'line';    // 'line' | 'shapes' | 'curves' | 'transform'
+let currentTab = 'line';    // 'line' | 'shapes' | 'curves' | 'transform' | 'animations'
 let currentShape = 'persegi';
 let currentCurve = 'circle';
 let currentTransformType = 'translate';
@@ -62,6 +63,7 @@ document.addEventListener('DOMContentLoaded', () => {
     shapesControls:   document.getElementById('shapes-controls'),
     curvesControls:   document.getElementById('curves-controls'),
     transformControls: document.getElementById('transform-controls'),
+    animationsControls: document.getElementById('animations-controls'),
 
     // Line Controls
     algoSelect:       document.getElementById('algo-select'),
@@ -91,6 +93,11 @@ document.addEventListener('DOMContentLoaded', () => {
     transformAnimGroup:       document.getElementById('transform-anim-group'),
     transformTSlider:         document.getElementById('transform-t-slider'),
     transformTLabel:          document.getElementById('transform-t-label'),
+
+    // Animations Controls & Sidebar
+    animSidebar:        document.getElementById('anim-sidebar'),
+    animCodeContainer:  document.getElementById('anim-code-container'),
+    animInspectorPanel: document.getElementById('anim-inspector-panel'),
 
     // Shared Controls
     gridSizeSelect:   document.getElementById('grid-size-select'),
@@ -130,6 +137,12 @@ document.addEventListener('DOMContentLoaded', () => {
   codeView.init(els.codeContainer);
   tracer.init(els.traceHead, els.traceBody, els.traceScroll);
   simulator.init(grid, codeView, tracer, els.stepDescription, els.stepCounter);
+  animationManager.init(grid, {
+    animSidebar: els.animSidebar,
+    animCodeContainer: els.animCodeContainer,
+    animInspectorPanel: els.animInspectorPanel,
+    infoBar: els.infoBar,
+  });
 
   // Setup transform-specific step listener
   simulator.onStep((data) => {
@@ -167,6 +180,7 @@ document.addEventListener('DOMContentLoaded', () => {
   setupShapeSelector();
   setupCurveSelector();
   setupTransform();
+  setupAnimationsSidebar();
   setupPlayback();
   setupGridHover();
   setupResizeHandler();
@@ -188,6 +202,11 @@ function setupTabs() {
       currentTab = tab;
       simulator.stop();
 
+      // Pause animation loop if leaving animations tab
+      if (tab !== 'animations') {
+        animationManager.pause();
+      }
+
       // Update tab button active states
       els.tabBtns.forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
 
@@ -196,6 +215,10 @@ function setupTabs() {
       els.shapesControls.classList.toggle('hidden', tab !== 'shapes');
       els.curvesControls.classList.toggle('hidden', tab !== 'curves');
       els.transformControls.classList.toggle('hidden', tab !== 'transform');
+      els.animationsControls.classList.toggle('hidden', tab !== 'animations');
+
+      // Show/hide animations sidebar
+      els.animSidebar.classList.toggle('hidden', tab !== 'animations');
 
       // Show/hide shape-specific panel elements
       els.shapeParamsBar.classList.toggle('hidden', tab !== 'shapes');
@@ -206,14 +229,17 @@ function setupTabs() {
       els.curveSelectorBar.classList.toggle('hidden', tab !== 'curves');
 
       // Show/hide transform specific panel elements
-      els.codeContainer.classList.toggle('hidden', tab === 'transform');
+      els.codeContainer.classList.toggle('hidden', tab === 'transform' || tab === 'animations');
       els.transformMatrixPanel.classList.toggle('hidden', tab !== 'transform');
-      els.traceScroll.classList.toggle('hidden', tab === 'transform');
+      els.animCodeContainer.classList.toggle('hidden', tab !== 'animations');
+
+      els.traceScroll.classList.toggle('hidden', tab === 'transform' || tab === 'animations');
       els.transformCalcPanel.classList.toggle('hidden', tab !== 'transform');
+      els.animInspectorPanel.classList.toggle('hidden', tab !== 'animations');
       els.transformAnimGroup.classList.toggle('hidden', tab !== 'transform');
 
-      // Clear overlay if not transform
-      if (tab !== 'transform') {
+      // Clear overlay if not transform or animations
+      if (tab !== 'transform' && tab !== 'animations') {
         grid.setOverlay(null);
       }
 
@@ -233,6 +259,11 @@ function setupTabs() {
         els.codePanelTitle.textContent = 'Matriks Homogen 3×3 & Teori';
         if (els.tracePanelIcon) els.tracePanelIcon.textContent = '🧮';
         els.tracePanelTitle.textContent = 'Runtutan Perhitungan Manual';
+      } else if (tab === 'animations') {
+        if (els.codePanelIcon) els.codePanelIcon.textContent = '📝';
+        els.codePanelTitle.textContent = 'Codebase & Algoritma';
+        if (els.tracePanelIcon) els.tracePanelIcon.textContent = '📊';
+        els.tracePanelTitle.textContent = 'Live Inspector & Kontrol';
       } else {
         if (els.codePanelIcon) els.codePanelIcon.textContent = '📝';
         els.codePanelTitle.textContent = 'Algorithm Code (C#)';
@@ -242,6 +273,22 @@ function setupTabs() {
 
       // Load the appropriate simulation
       loadCurrentSimulation();
+
+      // If switched to animations, start running animation
+      if (tab === 'animations') {
+        animationManager.play();
+        updatePlaybackUI({ playing: true, finished: false });
+      }
+    });
+  });
+}
+
+function setupAnimationsSidebar() {
+  if (!els.animSidebar) return;
+  els.animSidebar.querySelectorAll('.anim-nav-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const animKey = btn.dataset.anim;
+      animationManager.switchAnimation(animKey);
     });
   });
 }
@@ -471,6 +518,11 @@ function buildSymmetryLegend(curveKey) {
 
 function setupPlayback() {
   els.btnPlay.addEventListener('click', () => {
+    if (currentTab === 'animations') {
+      animationManager.togglePlay();
+      updatePlaybackUI({ playing: animationManager.running, finished: false });
+      return;
+    }
     if (simulator.isFinished()) return;
     if (!simulator.generator) {
       loadCurrentSimulation();
@@ -479,6 +531,11 @@ function setupPlayback() {
   });
 
   els.btnStep.addEventListener('click', () => {
+    if (currentTab === 'animations') {
+      animationManager.step();
+      updatePlaybackUI({ playing: false, finished: false });
+      return;
+    }
     if (simulator.isFinished()) return;
     if (!simulator.generator) {
       loadCurrentSimulation();
@@ -488,12 +545,19 @@ function setupPlayback() {
   });
 
   els.btnReset.addEventListener('click', () => {
+    if (currentTab === 'animations') {
+      animationManager.reset();
+      updatePlaybackUI({ playing: false, finished: false });
+      return;
+    }
     loadCurrentSimulation();
   });
 
   // State change callback
   simulator.onStateChange((state) => {
-    updatePlaybackUI(state);
+    if (currentTab !== 'animations') {
+      updatePlaybackUI(state);
+    }
   });
 }
 
@@ -509,6 +573,8 @@ function loadCurrentSimulation() {
     loadCurveSimulation();
   } else if (currentTab === 'transform') {
     loadTransformSimulation();
+  } else if (currentTab === 'animations') {
+    animationManager.switchAnimation(animationManager.currentKey);
   } else {
     loadSimulation();
   }

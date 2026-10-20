@@ -1274,5 +1274,311 @@ input[type="range"]::-moz-range-thumb {
   color: var(--accent-amber);
 }
 
+/* ============================================================
+   PHASE 5: 2D ANIMATION SHOWCASE & SIDEBAR STYLES
+   ============================================================ */
+
+/* Tab Active State for Animations */
+.tab-btn.active[data-tab="animations"] {
+  color: #ff5588;
+  border-bottom-color: #ff5588;
+}
+
+/* Animations Showcase Sidebar */
+.anim-sidebar {
+  width: 210px;
+  min-width: 200px;
+  background: var(--bg-secondary);
+  border-right: 1px solid var(--border-subtle);
+  display: flex;
+  flex-direction: column;
+  padding: 10px 8px;
+  gap: 6px;
+  flex-shrink: 0;
+  overflow-y: auto;
+}
+
+.sidebar-title {
+  font-size: 10.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--text-muted);
+  padding: 4px 8px 6px;
+  border-bottom: 1px solid var(--border-subtle);
+  margin-bottom: 4px;
+}
+
+.anim-nav-btn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--radius);
+  color: var(--text-secondary);
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.2s ease;
+  font-family: 'Inter', sans-serif;
+}
+
+.anim-nav-btn:hover {
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--text-primary);
+  border-color: var(--border-subtle);
+}
+
+.anim-nav-btn.active {
+  background: rgba(255, 85, 136, 0.12);
+  color: #ff88aa;
+  border-color: rgba(255, 85, 136, 0.4);
+  box-shadow: 0 0 10px rgba(255, 85, 136, 0.2);
+}
+
+.anim-icon {
+  font-size: 20px;
+  flex-shrink: 0;
+}
+
+.anim-info {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.anim-name {
+  font-size: 12px;
+  font-weight: 600;
+  color: inherit;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.anim-desc {
+  font-size: 10px;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.anim-nav-btn.active .anim-desc {
+  color: rgba(255, 200, 220, 0.7);
+}
+
+/* Animation Inspector Panel (Column 3) */
+.anim-inspector-panel {
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.inspector-box {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.inspector-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 11.5px;
+  padding: 4px 0;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.ins-label {
+  color: var(--text-secondary);
+}
+
+.ins-val {
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.ins-val.highlight {
+  color: var(--accent-cyan);
+}
+
+.inspector-section-title {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--accent-amber);
+  margin-top: 8px;
+  margin-bottom: 4px;
+}
+
+.ins-hint {
+  font-size: 10.5px;
+  color: var(--text-muted);
+  line-height: 1.4;
+  margin-top: 6px;
+  font-style: italic;
+}
+
+/* Radar Target List */
+.target-list-scroll {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.target-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 10px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10.5px;
+  transition: all 0.25s ease;
+}
+
+.target-card.detected {
+  border-color: #00ff88;
+  background: rgba(0, 255, 136, 0.08);
+  box-shadow: 0 0 8px rgba(0, 255, 136, 0.2);
+}
+
+.target-name {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.target-coord {
+  color: var(--text-secondary);
+}
+
+.target-dist {
+  color: var(--accent-cyan);
+}
+
+.target-status {
+  font-size: 9.5px;
+}
+
+/* Kinematic D-Pad Controller */
+.dpad-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  margin: 10px 0;
+}
+
+.dpad-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.dpad-btn {
+  width: 44px;
+  height: 40px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-medium);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font-size: 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+}
+
+.dpad-btn:hover {
+  background: var(--bg-surface);
+  border-color: var(--accent-cyan);
+  box-shadow: var(--glow-cyan);
+  transform: scale(1.05);
+}
+
+.dpad-btn:active {
+  transform: scale(0.95);
+  background: rgba(0, 255, 204, 0.2);
+}
+
+.dpad-center {
+  width: 44px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  background: rgba(7, 7, 20, 0.6);
+  border-radius: var(--radius-sm);
+}
+
+.action-status-card {
+  background: rgba(0, 255, 204, 0.04);
+  border: 1px solid rgba(0, 255, 204, 0.2);
+  border-radius: var(--radius-sm);
+  padding: 6px 10px;
+  font-size: 11px;
+  color: var(--accent-cyan);
+  font-family: 'JetBrains Mono', monospace;
+  margin: 4px 0;
+}
+
+/* Explosion Trigger Button */
+.trigger-btn {
+  padding: 8px 14px;
+  border-radius: var(--radius-sm);
+  background: linear-gradient(135deg, #ff4400, #cc0033);
+  color: #ffffff;
+  border: 1px solid rgba(255, 100, 50, 0.5);
+  font-weight: 600;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-top: 6px;
+}
+
+.trigger-btn:hover {
+  background: linear-gradient(135deg, #ff6622, #ee1144);
+  box-shadow: 0 0 12px rgba(255, 68, 0, 0.4);
+}
+
+/* Sliders inside Inspector */
+.slider-control-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+
+.slider-control-group label {
+  width: 100px;
+  flex-shrink: 0;
+}
+
+.slider-control-group input[type="range"] {
+  flex: 1;
+}
+
+.slider-val {
+  font-family: 'JetBrains Mono', monospace;
+  width: 32px;
+  text-align: right;
+  color: var(--accent-amber);
+}
+
+
 
 
